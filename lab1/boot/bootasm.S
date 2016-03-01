@@ -46,7 +46,7 @@ seta20.2:
     # and segment translation that makes virtual addresses
     # identical to physical addresses, so that the
     # effective memory map does not change during the switch.
-    lgdt gdtdesc
+    lgdt gdtdesc                    #waht's gdtdesc or where's gdtdesc,ok,I know
     movl %cr0, %eax
     orl $CR0_PE_ON, %eax
     movl %eax, %cr0
