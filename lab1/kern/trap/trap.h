@@ -47,6 +47,9 @@
 #define T_SWITCH_TOU                120    // user/kernel switch
 #define T_SWITCH_TOK                121    // user/kernel switch
 
+
+#define SYSCALL_TICKS 1
+
 /* registers as pushed by pushal */
 struct pushregs {
     uint32_t reg_edi;

@@ -185,6 +185,15 @@ trap_dispatch(struct trapframe *tf) {
     case IRQ_OFFSET + IRQ_IDE2:
         /* do nothing */
         break;
+    case T_SYSCALL:
+        switch(tf->tf_regs.reg_eax){
+            case SYSCALL_TICKS:
+                tf->tf_regs.reg_eax=ticks;
+                break;
+            default:
+                tf->tf_regs.reg_eax=-1;
+        }
+        break;
     default:
         // in kernel, it must be a mistake
         if ((tf->tf_cs & 3) == 0) {
