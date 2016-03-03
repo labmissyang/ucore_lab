@@ -49,10 +49,10 @@ idt_init(void) {
     extern uintptr_t __vectors[];
     int i=0;
     for(;i<256;i++){
-        if((i < 8 || i > 14) && i != 17 && i != 0x80){
+        if((i < 8 || i > 14) && i != 17 && i != T_SYSCALL){
             SETGATE(idt[i],0,GD_KTEXT,__vectors[i],0);
         }
-        else if(i==0x80){
+        else if(i==T_SYSCALL || i==T_SWITCH_TOU || i==T_SWITCH_TOK){
             SETGATE(idt[i],1,GD_KTEXT,__vectors[i],3);
         }
         else{
@@ -150,6 +150,8 @@ print_regs(struct pushregs *regs) {
 }
 
 /* trap_dispatch - dispatch based on what type of trap occurred */
+
+uint32_t saved_esp;
 static void
 trap_dispatch(struct trapframe *tf) {
     char c;
@@ -175,11 +177,24 @@ trap_dispatch(struct trapframe *tf) {
     case IRQ_OFFSET + IRQ_KBD:
         c = cons_getc();
         cprintf("kbd [%03d] %c\n", c, c);
+        if(c==51){
+            tf->tf_es=tf->tf_cs=tf->tf_ss=GD_UDATA;
+            tf->tf_cs=GD_UTEXT;
+        }
+        else if(c==48){
+            tf->tf_es=tf->tf_cs=tf->tf_ss=GD_KDATA;
+            tf->tf_cs=GD_KTEXT;
+        }
+        print_trapframe(tf);
         break;
     //LAB1 CHALLENGE 1 : YOUR CODE you should modify below codes.
     case T_SWITCH_TOU:
+        tf->tf_es=tf->tf_cs=tf->tf_ss=GD_UDATA;
+        tf->tf_cs=GD_UTEXT;
+        break;
     case T_SWITCH_TOK:
-        panic("T_SWITCH_** ??\n");
+        tf->tf_es=tf->tf_cs=tf->tf_ss=GD_KDATA;
+        tf->tf_cs=GD_KTEXT;
         break;
     case IRQ_OFFSET + IRQ_IDE1:
     case IRQ_OFFSET + IRQ_IDE2:
