@@ -31,11 +31,13 @@ kern_init(void) {
 
     grade_backtrace();
 
-    pmm_init();                 // init physical memory management
+    cprintf("+++%p\n",&ticks);
 
+    pmm_init();                 // init physical memory management
+    cprintf("+++%p\n",&ticks);
     pic_init();                 // init interrupt controller
     idt_init();                 // init interrupt descriptor table
-
+    cprintf("+++%p\n",&ticks);
     vmm_init();                 // init virtual memory management
 
     ide_init();                 // init ide devices
