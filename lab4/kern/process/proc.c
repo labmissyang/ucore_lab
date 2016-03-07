@@ -102,6 +102,9 @@ alloc_proc(void) {
      *       uint32_t flags;                             // Process flag
      *       char name[PROC_NAME_LEN + 1];               // Process name
      */
+    memset(proc,0,sizeof(struct proc_struct));
+    proc->state=PROC_UNINIT;
+    proc->parent=current;
     }
     return proc;
 }
@@ -296,6 +299,27 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
     //    5. insert proc_struct into hash_list && proc_list
     //    6. call wakeup_proc to make the new child process RUNNABLE
     //    7. set ret vaule using child proc's pid
+    if((proc=alloc_proc())==NULL)
+      goto fork_out;
+    proc->pid=get_pid();
+    if(copy_mm(clone_flags,proc)!=0)
+      goto bad_fork_cleanup_proc;
+    if(setup_kstack(proc)==E_NO_MEM)
+      goto bad_fork_cleanup_kstack;
+    if(stack==0){
+      copy_thread(proc,(proc->kstack+KSTACKSIZE-1),tf);
+      proc->cr3=boot_cr3;
+    }
+    else{
+      copy_thread(proc,stack,tf);
+    }
+    wakeup_proc(proc);
+    hash_proc(proc);
+    list_add(&proc_list,&proc->list_link);
+    ret=proc->pid;
+    nr_process++;
+
+
 fork_out:
     return ret;
 
