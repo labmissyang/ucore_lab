@@ -238,10 +238,8 @@ trap_dispatch(struct trapframe *tf) {
          *    Every TICK_NUM cycle, you should set current process's current->need_resched = 1
          */
         ticks++;
-        if(ticks==100){
-            print_ticks();
-            ticks=0;
-        }
+        if(ticks==TICK_NUM)
+            current->need_resched=1;
         break;
     case IRQ_OFFSET + IRQ_COM1:
         c = cons_getc();

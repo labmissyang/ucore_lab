@@ -17,6 +17,7 @@
 #include <sync.h>
 #include <proc.h>
 
+
 #define TICK_NUM 100
 
 static void print_ticks() {
@@ -57,6 +58,20 @@ idt_init(void) {
      /* LAB5 YOUR CODE */ 
      //you should update your lab1 code (just add ONE or TWO lines of code), let user app to use syscall to get the service of ucore
      //so you should setup the syscall interrupt gate in here
+    extern uintptr_t __vectors[];
+    int i=0;
+    for(;i<256;i++){
+        if((i < 8 || i > 14) && i != 17 && i != T_SYSCALL){
+            SETGATE(idt[i],0,GD_KTEXT,__vectors[i],0);
+        }
+        else if(i==T_SYSCALL || i==T_SWITCH_TOU || i==T_SWITCH_TOK){
+            SETGATE(idt[i],1,GD_KTEXT,__vectors[i],3);
+        }
+        else{
+            SETGATE(idt[i],1,GD_KTEXT,__vectors[i],0);
+        }
+    }
+    lidt(&idt_pd);
 }
 
 static const char *
@@ -229,6 +244,11 @@ trap_dispatch(struct trapframe *tf) {
          * IMPORTANT FUNCTIONS:
 	     * sched_class_proc_tick
          */
+        ticks++;
+        //if(ticks==100){
+        //    ticks=0;
+        //}
+        sched_class_proc_tick(current);
         break;
     case IRQ_OFFSET + IRQ_COM1:
         c = cons_getc();
