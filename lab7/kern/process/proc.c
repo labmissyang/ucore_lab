@@ -119,6 +119,7 @@ alloc_proc(void) {
      *     uint32_t lab6_stride;                       // FOR LAB6 ONLY: the current stride of the process
      *     uint32_t lab6_priority;                     // FOR LAB6 ONLY: the priority of process, set by lab6_set_priority(uint32_t)
      */
+
     memset(proc,0,sizeof(struct proc_struct));
     proc->state=PROC_UNINIT;
     list_init(&(proc->run_link));
@@ -418,9 +419,8 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
 	*    update step 1: set child proc's parent to current process, make sure current process's wait_state is 0
 	*    update step 5: insert proc_struct into hash_list && proc_list, set the relation links of process
     */
-  if((proc=alloc_proc())==NULL)
+    if((proc=alloc_proc())==NULL)
       goto fork_out;
-    proc->pid=get_pid();
     proc->parent=current;
     if(copy_mm(clone_flags,proc)!=0)
       goto bad_fork_cleanup_proc;
@@ -433,11 +433,19 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
     else{
       copy_thread(proc,stack,tf);
     }
-    wakeup_proc(proc);
+    
+    bool intr_flag;
+    local_intr_save(intr_flag);
+
+    proc->pid=get_pid();
     hash_proc(proc);
     set_links(proc);
+
+    local_intr_restore(intr_flag);
+
+    wakeup_proc(proc);
     ret=proc->pid;
-	
+    
 fork_out:
     return ret;
 
@@ -640,7 +648,7 @@ load_icode(unsigned char *binary, size_t size) {
     tf->tf_ds=tf->tf_es=tf->tf_ss=USER_DS;
     tf->tf_esp=USTACKTOP;
     tf->tf_eip=elf->e_entry;
-    tf->tf_eflags=tf->tf_eflags | FL_IF;
+    tf->tf_eflags=FL_IF;
     ret = 0;
 out:
     return ret;
