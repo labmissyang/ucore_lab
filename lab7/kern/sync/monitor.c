@@ -61,7 +61,7 @@ cond_wait (condvar_t *cvp) {
     *         wait(cv.sem);
     *         cv.count --;
     */
-    cvp->count--;
+    cvp->count++;
     if(cvp->owner->next_count>0)
       up(&(cvp->owner->next));
     else

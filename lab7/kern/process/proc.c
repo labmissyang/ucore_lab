@@ -125,6 +125,7 @@ alloc_proc(void) {
     list_init(&(proc->run_link));
     skew_heap_init(&(proc->lab6_run_pool));
     proc->lab6_priority=1;
+    proc->cr3 = boot_cr3;
     }
     return proc;
 }
@@ -419,20 +420,16 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
 	*    update step 1: set child proc's parent to current process, make sure current process's wait_state is 0
 	*    update step 5: insert proc_struct into hash_list && proc_list, set the relation links of process
     */
+  
     if((proc=alloc_proc())==NULL)
       goto fork_out;
     proc->parent=current;
+    if(setup_kstack(proc)!=0)
+      goto bad_fork_cleanup_kstack;
     if(copy_mm(clone_flags,proc)!=0)
       goto bad_fork_cleanup_proc;
-    if(setup_kstack(proc)==E_NO_MEM)
-      goto bad_fork_cleanup_kstack;
-    if(stack==0){
-      copy_thread(proc,(proc->kstack+KSTACKSIZE-1),tf);
-      proc->cr3=boot_cr3;
-    }
-    else{
+
       copy_thread(proc,stack,tf);
-    }
     
     bool intr_flag;
     local_intr_save(intr_flag);
@@ -445,6 +442,7 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
 
     wakeup_proc(proc);
     ret=proc->pid;
+    
     
 fork_out:
     return ret;
