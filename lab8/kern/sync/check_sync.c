@@ -125,6 +125,10 @@ void phi_take_forks_condvar(int i) {
      // I am hungry
      // try to get fork
 //--------leave routine in monitor--------------
+     state_condvar[i]=HUNGRY; 
+     phi_test_condvar(i);
+     while(state_condvar[i]!=EATING)
+        cond_wait(&(mtp->cv[i]));
       if(mtp->next_count>0)
          up(&(mtp->next));
       else
@@ -133,6 +137,9 @@ void phi_take_forks_condvar(int i) {
 
 void phi_put_forks_condvar(int i) {
      down(&(mtp->mutex));
+     state_condvar[i]=THINKING; 
+     phi_test_condvar(LEFT);
+     phi_test_condvar(RIGHT);
 
 //--------into routine in monitor--------------
      // LAB7 EXERCISE1: YOUR CODE
@@ -194,3 +201,4 @@ void check_sync(void){
         set_proc_name(philosopher_proc_condvar[i], "philosopher_condvar_proc");
     }
 }
+
